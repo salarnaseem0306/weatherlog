@@ -71,10 +71,12 @@ def reading_create(request, city_id):
             reading.city = city
             reading.save()
             messages.success(request, "Reading saved")
-            # return redirect("city_detail", pk=city.pk)
+
+            return redirect("city_detail", pk=city.pk)
 
                         
-            return city_detail(request, city.pk)
+
+        
     else:
         form = ReadingForm(city=city)
     return render(
