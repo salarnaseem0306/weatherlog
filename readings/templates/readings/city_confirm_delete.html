@@ -1,11 +1,12 @@
 {% extends "readings/base.html" %}
 
-{% block title %}Delete {{ city.name }}{% endblock %}
+{% block title %}Delete reading{% endblock %}
 
 {% block content %}
-  <h1>Delete {{ city.name }}?</h1>
+  <h1>Delete this reading?</h1>
   <p>
-    This will also delete {{ reading_count }} reading{{ reading_count|pluralize }}.
+    {{ city.name }}, {{ reading.date }}
+    (max {{ reading.max_temp|default:"-" }}, min {{ reading.min_temp|default:"-" }}).
     This cannot be undone.
   </p>
   <form method="post">

@@ -60,6 +60,8 @@ def city_delete(request, pk):
         "readings/city_confirm_delete.html",
         {"city": city, "reading_count": city.readings.count()},
     )
+
+
 def reading_create(request, city_id):
     city = get_object_or_404(City, pk=city_id)
     if request.method == "POST":
@@ -77,3 +79,36 @@ def reading_create(request, city_id):
         "readings/reading_form.html",
         {"form": form, "city": city, "title": f"Add reading for {city.name}"},
     )
+
+
+def reading_update(request, pk):
+    reading = get_object_or_404(Reading.objects.select_related("city"), pk=pk)
+    city = reading.city
+    if request.method == "POST":
+        form = ReadingForm(request.POST, instance=reading, city=city)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Reading saved")
+            return redirect("city_detail", pk=city.pk)
+    else:
+        form = ReadingForm(instance=reading, city=city)
+    return render(
+        request,
+        "readings/reading_form.html",
+        {"form": form, "city": city, "title": f"Edit reading for {city.name}"},
+    )
+
+
+def reading_delete(request, pk):
+    reading = get_object_or_404(Reading.objects.select_related("city"), pk=pk)
+    city = reading.city
+    if request.method == "POST":
+        reading.delete()
+        messages.success(request, "Reading deleted")
+        return redirect("city_detail", pk=city.pk)
+    return render(
+        request,
+        "readings/reading_confirm_delete.html",
+        {"reading": reading, "city": city},
+    )
+

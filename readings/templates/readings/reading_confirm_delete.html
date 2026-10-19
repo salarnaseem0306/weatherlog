@@ -1,0 +1,10 @@
+{% extends "readings/base.html" %}
+{% block content %}
+  <h1>Delete reading?</h1>
+  <p>{{ reading }} Permanent Delete.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+    <a href="{% url 'city_detail' reading.city_id %}">Cancel</a>
+  </form>
+{% endblock %}

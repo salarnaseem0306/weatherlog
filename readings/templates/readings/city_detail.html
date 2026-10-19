@@ -15,11 +15,11 @@
   </p>
 
   <h2>Latest readings</h2>
-  <p><a href="{% url 'reading_create' city.pk %}">Add reading</a></p>  
+  <p><a href="{% url 'reading_create' city.pk %}">Add reading</a></p>
   <table>
     <thead>
       <tr>
-        <th>Date</th><th>Max</th><th>Min</th><th>Humidity</th><th>Source</th><th>Notes</th>
+        <th>Date</th><th>Max</th><th>Min</th><th>Humidity</th><th>Source</th><th>Notes</th><th></th>
       </tr>
     </thead>
     <tbody>
@@ -31,9 +31,13 @@
           <td>{{ reading.humidity|default:"-" }}</td>
           <td>{{ reading.get_source_display }}</td>
           <td>{{ reading.notes }}</td>
+          <td>
+            <a href="{% url 'reading_update' reading.pk %}">Edit</a>
+            | <a href="{% url 'reading_delete' reading.pk %}">Delete</a>
+          </td>
         </tr>
       {% empty %}
-        <tr><td colspan="6">No readings yet.</td></tr>
+        <tr><td colspan="7">No readings yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
