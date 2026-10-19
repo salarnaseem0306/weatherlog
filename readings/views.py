@@ -5,6 +5,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import CityForm
 from .models import City
 
+from .forms import CityForm, ReadingForm
+from .models import City, Reading
+
 
 def city_list(request):
     cities = City.objects.annotate(reading_count=Count("readings")).order_by("name")
@@ -56,4 +59,21 @@ def city_delete(request, pk):
         request,
         "readings/city_confirm_delete.html",
         {"city": city, "reading_count": city.readings.count()},
+    )
+def reading_create(request, city_id):
+    city = get_object_or_404(City, pk=city_id)
+    if request.method == "POST":
+        form = ReadingForm(request.POST, city=city)
+        if form.is_valid():
+            reading = form.save(commit=False)
+            reading.city = city
+            reading.save()
+            messages.success(request, "Reading saved")
+            return redirect("city_detail", pk=city.pk)
+    else:
+        form = ReadingForm(city=city)
+    return render(
+        request,
+        "readings/reading_form.html",
+        {"form": form, "city": city, "title": f"Add reading for {city.name}"},
     )
