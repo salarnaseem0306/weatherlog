@@ -1,84 +1,98 @@
 from django.contrib import messages
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
-
-from .forms import CityForm
-from .models import City
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 
 from .forms import CityForm, ReadingForm
 from .models import City, Reading
 
 
-def city_list(request):
-    cities = City.objects.annotate(reading_count=Count("readings")).order_by("name")
-    return render(request, "readings/city_list.html", {"cities": cities})
+class CityListView(ListView):
+    model = City
+    template_name = "readings/city_list.html"
+    context_object_name = "cities"
+
+    def get_queryset(self):
+        return City.objects.annotate(
+            reading_count=Count("readings")
+        ).order_by("name")
 
 
-def city_detail(request, pk):
-    city = get_object_or_404(City, pk=pk)
-    readings = city.readings.order_by("-date")[:30]
-    return render(
-        request,
-        "readings/city_detail.html",
-        {"city": city, "readings": readings},
-    )
-def city_create(request):
-    if request.method == "POST":
-        form = CityForm(request.POST)
-        if form.is_valid():
-            city = form.save()
-            messages.success(request, "City saved")
-            return redirect("city_detail", pk=city.pk)
-    else:
-        form = CityForm()
-    return render(request, "readings/city_form.html", {"form": form, "title": "Add city"})
+class CityDetailView(DetailView):
+    model = City
+    template_name = "readings/city_detail.html"
+    context_object_name = "city"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["readings"] = self.object.readings.order_by("-date")[:30]
+        return context
 
 
-def city_update(request, pk):
-    city = get_object_or_404(City, pk=pk)
-    if request.method == "POST":
-        form = CityForm(request.POST, instance=city)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "City saved")
-            return redirect("city_detail", pk=city.pk)
-    else:
-        form = CityForm(instance=city)
-    return render(
-        request,
-        "readings/city_form.html",
-        {"form": form, "title": f"Edit {city.name}"},
-    )
-def city_delete(request, pk):
-    city = get_object_or_404(City, pk=pk)
-    if request.method == "POST":
-        city.delete()
-        messages.success(request, "City deleted")
-        return redirect("city_list")
-    return render(
-        request,
-        "readings/city_confirm_delete.html",
-        {"city": city, "reading_count": city.readings.count()},
-    )
+class CityCreateView(CreateView):
+    model = City
+    form_class = CityForm
+    template_name = "readings/city_form.html"
+    extra_context = {"title": "Add city"}
+
+    def form_valid(self, form):
+        messages.success(self.request, "City saved")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("city_detail", kwargs={"pk": self.object.pk})
+
+
+class CityUpdateView(UpdateView):
+    model = City
+    form_class = CityForm
+    template_name = "readings/city_form.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["title"] = f"Edit {self.object.name}"
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "City saved")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("city_detail", kwargs={"pk": self.object.pk})
+
+
+class CityDeleteView(DeleteView):
+    model = City
+    template_name = "readings/city_confirm_delete.html"
+    context_object_name = "city"
+    success_url = reverse_lazy("city_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["reading_count"] = self.object.readings.count()
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "City deleted")
+        return super().form_valid(form)
 
 
 def reading_create(request, city_id):
     city = get_object_or_404(City, pk=city_id)
+
     if request.method == "POST":
         form = ReadingForm(request.POST, city=city)
+
         if form.is_valid():
             reading = form.save(commit=False)
             reading.city = city
             reading.save()
             messages.success(request, "Reading saved")
-
             return redirect("city_detail", pk=city.pk)
-
-                        
-
-        
     else:
         form = ReadingForm(city=city)
+
     return render(
         request,
         "readings/reading_form.html",
@@ -86,34 +100,52 @@ def reading_create(request, city_id):
     )
 
 
-def reading_update(request, pk):
-    reading = get_object_or_404(Reading.objects.select_related("city"), pk=pk)
-    city = reading.city
-    if request.method == "POST":
-        form = ReadingForm(request.POST, instance=reading, city=city)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Reading saved")
-            return redirect("city_detail", pk=city.pk)
-    else:
-        form = ReadingForm(instance=reading, city=city)
-    return render(
-        request,
-        "readings/reading_form.html",
-        {"form": form, "city": city, "title": f"Edit reading for {city.name}"},
-    )
+class ReadingUpdateView(UpdateView):
+    model = Reading
+    form_class = ReadingForm
+    template_name = "readings/reading_form.html"
+
+    def get_queryset(self):
+        return Reading.objects.select_related("city")
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["city"] = self.object.city
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["city"] = self.object.city
+        context["title"] = f"Edit reading for {self.object.city.name}"
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "Reading saved")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "city_detail", kwargs={"pk": self.object.city.pk}
+        )
 
 
-def reading_delete(request, pk):
-    reading = get_object_or_404(Reading.objects.select_related("city"), pk=pk)
-    city = reading.city
-    if request.method == "POST":
-        reading.delete()
-        messages.success(request, "Reading deleted")
-        return redirect("city_detail", pk=city.pk)
-    return render(
-        request,
-        "readings/reading_confirm_delete.html",
-        {"reading": reading, "city": city},
-    )
+class ReadingDeleteView(DeleteView):
+    model = Reading
+    template_name = "readings/reading_confirm_delete.html"
 
+    def get_queryset(self):
+        return Reading.objects.select_related("city")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["city"] = self.object.city
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, "Reading deleted")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy(
+            "city_detail", kwargs={"pk": self.object.city.pk}
+        )
