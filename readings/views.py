@@ -46,3 +46,14 @@ def city_update(request, pk):
         "readings/city_form.html",
         {"form": form, "title": f"Edit {city.name}"},
     )
+def city_delete(request, pk):
+    city = get_object_or_404(City, pk=pk)
+    if request.method == "POST":
+        city.delete()
+        messages.success(request, "City deleted")
+        return redirect("city_list")
+    return render(
+        request,
+        "readings/city_confirm_delete.html",
+        {"city": city, "reading_count": city.readings.count()},
+    )

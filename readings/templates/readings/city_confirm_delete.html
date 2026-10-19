@@ -1,0 +1,16 @@
+{% extends "readings/base.html" %}
+
+{% block title %}Delete {{ city.name }}{% endblock %}
+
+{% block content %}
+  <h1>Delete {{ city.name }}?</h1>
+  <p>
+    This will also delete {{ reading_count }} reading{{ reading_count|pluralize }}.
+    This cannot be undone.
+  </p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+    <a href="{% url 'city_detail' city.pk %}">Cancel</a>
+  </form>
+{% endblock %}

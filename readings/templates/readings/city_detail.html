@@ -4,7 +4,10 @@
 
 {% block content %}
   <h1>{{ city.name }}</h1>
-<p><a href="{% url 'city_update' city.pk %}">Edit city</a></p>
+  <p>
+    <a href="{% url 'city_update' city.pk %}">Edit city</a>
+    | <a href="{% url 'city_delete' city.pk %}">Delete city</a>
+  </p>
   <p>
     {{ city.country }}
     | Latitude: {{ city.latitude|default:"-" }}
