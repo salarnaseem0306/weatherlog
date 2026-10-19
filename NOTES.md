@@ -6,6 +6,7 @@ Django hid: the SQL itself; I only see it by running `sqlmigrate`.
 
 ## migrate.py (PRAGMA user_version) -> makemigrations / migrate
 Django did: generated the SQL, kept the steps in order, copied the data, and tracked the version in the `django_migrations` table.
+
 Django hid: on SQLite, adding a field rebuilds the whole table, which can be slow on a big table.
 
 ## CHECK / UNIQUE in SQL -> constraints in Meta
