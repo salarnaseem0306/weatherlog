@@ -10,6 +10,8 @@ class CityForm(forms.ModelForm):
 
 
 class ReadingForm(forms.ModelForm):
+
+    humidity = forms.IntegerField(min_value=0, max_value=100, required=False)
     class Meta:
         model = Reading
         fields = ["date", "max_temp", "min_temp", "humidity", "notes"]
