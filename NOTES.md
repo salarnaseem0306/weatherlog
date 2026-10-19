@@ -15,3 +15,7 @@ Django hid: `choices` and `on_delete` are enforced by Django in Python, not by t
 
 ## on_delete
 I chose `on_delete=CASCADE` because the Day 2 delete page will show a confirmation that says how many readings will be deleted with the city, so no orphan readings are left behind.
+
+## Admin username & password
+admin 
+Salar1122
