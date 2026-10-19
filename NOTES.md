@@ -31,3 +31,12 @@ The ORM builds the SQL for me and runs it only when I read the results (lazy eva
 
 ## N+1 queries
 Finding the hottest day for each city with a loop runs one query per city. It works for 3 cities, but it would be slow for many.
+
+## Post/Redirect/Get
+Without a redirect, the browser remembers the POST, so pressing refresh asks to resend it and can create a duplicate. After a redirect, refresh only repeats the GET.
+
+## CSRF
+Without `{% csrf_token %}` Django returns 403 ("CSRF token missing"). The token proves the form came from our own page, so another site cannot make a logged-in browser submit changes for us.
+
+## Why delete is POST only
+A link that deletes on GET can be triggered by prefetching browsers, crawlers or an image tag, so changes must use POST (plus a CSRF token).

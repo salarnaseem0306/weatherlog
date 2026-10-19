@@ -1,14 +1,17 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <title>{% block title %}WeatherLog{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'readings/style.css' %}">
 </head>
 <body>
   <nav>
     <a href="{% url 'city_list' %}">Cities</a>
+    <a href="{% url 'city_create' %}">Add city</a>
   </nav>
-    <main>
+  <main>
     {% if messages %}
       <ul class="messages">
         {% for message in messages %}
