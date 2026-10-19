@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}WeatherLog{% endblock %}</title>
+</head>
+<body>
+  <nav>
+    <a href="{% url 'city_list' %}">Cities</a>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

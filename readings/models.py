@@ -10,6 +10,8 @@ class City(models.Model):
 
     def __str__(self):
         return self.name
+    class Meta:
+        verbose_name_plural = "cities"    
 
 
 class Reading(models.Model):
@@ -19,7 +21,7 @@ class Reading(models.Model):
 
     city = models.ForeignKey(
         City,
-        on_delete=models.CASCADE,   # apna faisla: CASCADE ya PROTECT
+        on_delete=models.CASCADE, 
         related_name="readings",
     )
     date = models.DateField()
