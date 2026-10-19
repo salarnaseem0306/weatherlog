@@ -11,7 +11,7 @@
     <tbody>
       {% for city in cities %}
         <tr>
-          <td>{{ city.name }}</td>
+          <td><a href="{% url 'city_detail' city.pk %}">{{ city.name }}</a></td>
           <td>{{ city.country }}</td>
           <td>{{ city.reading_count }}</td>
         </tr>

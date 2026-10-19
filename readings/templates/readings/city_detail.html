@@ -1,0 +1,37 @@
+{% extends "readings/base.html" %}
+
+{% block title %}{{ city.name }}{% endblock %}
+
+{% block content %}
+  <h1>{{ city.name }}</h1>
+  <p>
+    {{ city.country }}
+    | Latitude: {{ city.latitude|default:"-" }}
+    | Longitude: {{ city.longitude|default:"-" }}
+  </p>
+
+  <h2>Latest readings</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th><th>Max</th><th>Min</th><th>Humidity</th><th>Source</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for reading in readings %}
+        <tr>
+          <td>{{ reading.date }}</td>
+          <td>{{ reading.max_temp|default:"-" }}</td>
+          <td>{{ reading.min_temp|default:"-" }}</td>
+          <td>{{ reading.humidity|default:"-" }}</td>
+          <td>{{ reading.get_source_display }}</td>
+          <td>{{ reading.notes }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6">No readings yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p><a href="{% url 'city_list' %}">Back to cities</a></p>
+{% endblock %}
