@@ -19,4 +19,5 @@ class CityAdmin(admin.ModelAdmin):
 class ReadingAdmin(admin.ModelAdmin):
     list_display = ("city", "date", "max_temp", "min_temp", "humidity", "source")
     list_filter = ("city", "source")
+    search_fields = ("city__name",)
     date_hierarchy = "date"
