@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -8,10 +9,11 @@ class City(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name_plural = "cities"
+
     def __str__(self):
         return self.name
-    class Meta:
-        verbose_name_plural = "cities"    
 
 
 class Reading(models.Model):
@@ -21,7 +23,7 @@ class Reading(models.Model):
 
     city = models.ForeignKey(
         City,
-        on_delete=models.CASCADE, 
+        on_delete=models.CASCADE,  # deleting a city also deletes its readings
         related_name="readings",
     )
     date = models.DateField()
@@ -33,6 +35,13 @@ class Reading(models.Model):
         max_length=10,
         choices=Source.choices,
         default=Source.MANUAL,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_readings",
     )
 
     class Meta:

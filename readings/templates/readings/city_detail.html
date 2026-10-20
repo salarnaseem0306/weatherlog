@@ -4,22 +4,41 @@
 
 {% block content %}
   <h1>{{ city.name }}</h1>
-  <p>
-    <a href="{% url 'city_update' city.pk %}">Edit city</a>
-    | <a href="{% url 'city_delete' city.pk %}">Delete city</a>
-  </p>
+
+  {% if user.is_authenticated %}
+    <p>
+      <a href="{% url 'city_update' city.pk %}">Edit city</a>
+      | <a href="{% url 'city_delete' city.pk %}">Delete city</a>
+    </p>
+  {% endif %}
+
   <p>
     {{ city.country }}
     | Latitude: {{ city.latitude|default:"-" }}
     | Longitude: {{ city.longitude|default:"-" }}
   </p>
 
-  <h2>Latest readings</h2>
-  <p><a href="{% url 'reading_create' city.pk %}">Add reading</a></p>
+  <h2>Readings</h2>
+
+  {% if user.is_authenticated %}
+    <p><a href="{% url 'reading_create' city.pk %}">Add reading</a></p>
+  {% endif %}
+
+  <form method="get">
+    <label>Year
+      <input type="number" name="year" value="{{ year }}" placeholder="2023">
+    </label>
+    <label>Month
+      <input type="number" name="month" min="1" max="12" value="{{ month }}" placeholder="1-12">
+    </label>
+    <button type="submit">Filter</button>
+    <a href="{% url 'city_detail' city.pk %}">Clear</a>
+  </form>
+
   <table>
     <thead>
       <tr>
-        <th>Date</th><th>Max</th><th>Min</th><th>Humidity</th><th>Source</th><th>Notes</th><th></th>
+        <th>Date</th><th>Max</th><th>Min</th><th>Humidity</th><th>Source</th><th>Notes</th><th>Added by</th><th></th>
       </tr>
     </thead>
     <tbody>
@@ -31,16 +50,33 @@
           <td>{{ reading.humidity|default:"-" }}</td>
           <td>{{ reading.get_source_display }}</td>
           <td>{{ reading.notes }}</td>
+          <td>{{ reading.created_by.username|default:"-" }}</td>
           <td>
-            <a href="{% url 'reading_update' reading.pk %}">Edit</a>
-            | <a href="{% url 'reading_delete' reading.pk %}">Delete</a>
+            {% if user.is_staff or user.is_authenticated and reading.created_by_id == user.id %}
+              <a href="{% url 'reading_update' reading.pk %}">Edit</a>
+              | <a href="{% url 'reading_delete' reading.pk %}">Delete</a>
+            {% endif %}
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="7">No readings yet.</td></tr>
+        <tr><td colspan="8">No readings found.</td></tr>
       {% endfor %}
     </tbody>
   </table>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Previous</a>
+      {% endif %}
+
+      <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Next</a>
+      {% endif %}
+    </nav>
+  {% endif %}
 
   <p><a href="{% url 'city_list' %}">Back to cities</a></p>
 {% endblock %}

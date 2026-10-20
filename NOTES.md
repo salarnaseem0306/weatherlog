@@ -40,3 +40,29 @@ Without `{% csrf_token %}` Django returns 403 ("CSRF token missing"). The token 
 
 ## Why delete is POST only
 A link that deletes on GET can be triggered by prefetching browsers, crawlers or an image tag, so changes must use POST (plus a CSRF token).
+
+
+## Day 3: Query counts and N+1
+
+Measured with `query_count.py` (CaptureQueriesContext), 5 cities in the database.
+
+| Case | Before | After | Fix |
+|------|--------|-------|-----|
+| Reading count per city | 6 queries | 1 query | `annotate(Count("readings"))` |
+| 31 readings with their city | 32 queries | 1 query | `select_related("city")` |
+| Every city with its readings | 6 queries | 2 queries | `prefetch_related("readings")` |
+| GET /cities/ | - | 1 query | annotate in `CityListView` |
+| GET city detail, page 1 | - | 3 queries | paginator count + page query with `select_related("created_by")` |
+
+**What N+1 is:** one query loads a list (the "1"), then the code touches a related
+object on each row and Django runs one more query per row (the "N"). With 5 cities
+that is 6 queries; with 500 cities it is 501.
+
+**select_related vs prefetch_related:**
+- `select_related` uses a SQL JOIN and fits ForeignKey / OneToOne (one related row per item).
+- `prefetch_related` runs a second query and joins the result in Python. It fits reverse
+  ForeignKey / many-to-many (many related rows per item), where a JOIN would repeat rows.
+
+**Pagination:** the city detail page shows 31 readings per page (one month), and
+`?year=2023&month=7` filters the readings. Invalid values are ignored. Only one page
+of rows is loaded from the database at a time.

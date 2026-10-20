@@ -1,11 +1,28 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
+
+from django.core.paginator import Paginator
 
 from .forms import CityForm, ReadingForm
 from .models import City, Reading
+
+
+class ReadingOwnerMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        reading = self.get_object()
+        user = self.request.user
+        return user.is_staff or reading.created_by_id == user.id
 
 
 class CityListView(ListView):
@@ -23,14 +40,39 @@ class CityDetailView(DetailView):
     model = City
     template_name = "readings/city_detail.html"
     context_object_name = "city"
+    paginate_by = 31
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["readings"] = self.object.readings.order_by("-date")[:30]
+
+        readings = (
+            self.object.readings
+            .select_related("created_by")
+            .order_by("-date")
+        )
+
+        year = self.request.GET.get("year", "")
+        month = self.request.GET.get("month", "")
+        if year.isdigit():
+            readings = readings.filter(date__year=int(year))
+        if month.isdigit() and 1 <= int(month) <= 12:
+            readings = readings.filter(date__month=int(month))
+
+        paginator = Paginator(readings, self.paginate_by)
+        page_obj = paginator.get_page(self.request.GET.get("page"))
+
+        params = self.request.GET.copy()
+        params.pop("page", None)
+
+        context["readings"] = page_obj
+        context["page_obj"] = page_obj
+        context["year"] = year
+        context["month"] = month
+        context["querystring"] = params.urlencode()
         return context
 
 
-class CityCreateView(CreateView):
+class CityCreateView(LoginRequiredMixin, CreateView):
     model = City
     form_class = CityForm
     template_name = "readings/city_form.html"
@@ -44,7 +86,7 @@ class CityCreateView(CreateView):
         return reverse_lazy("city_detail", kwargs={"pk": self.object.pk})
 
 
-class CityUpdateView(UpdateView):
+class CityUpdateView(LoginRequiredMixin, UpdateView):
     model = City
     form_class = CityForm
     template_name = "readings/city_form.html"
@@ -62,7 +104,7 @@ class CityUpdateView(UpdateView):
         return reverse_lazy("city_detail", kwargs={"pk": self.object.pk})
 
 
-class CityDeleteView(DeleteView):
+class CityDeleteView(LoginRequiredMixin, DeleteView):
     model = City
     template_name = "readings/city_confirm_delete.html"
     context_object_name = "city"
@@ -78,6 +120,7 @@ class CityDeleteView(DeleteView):
         return super().form_valid(form)
 
 
+@login_required
 def reading_create(request, city_id):
     city = get_object_or_404(City, pk=city_id)
 
@@ -87,6 +130,7 @@ def reading_create(request, city_id):
         if form.is_valid():
             reading = form.save(commit=False)
             reading.city = city
+            reading.created_by = request.user
             reading.save()
             messages.success(request, "Reading saved")
             return redirect("city_detail", pk=city.pk)
@@ -100,7 +144,7 @@ def reading_create(request, city_id):
     )
 
 
-class ReadingUpdateView(UpdateView):
+class ReadingUpdateView(ReadingOwnerMixin, UpdateView):
     model = Reading
     form_class = ReadingForm
     template_name = "readings/reading_form.html"
@@ -129,7 +173,7 @@ class ReadingUpdateView(UpdateView):
         )
 
 
-class ReadingDeleteView(DeleteView):
+class ReadingDeleteView(ReadingOwnerMixin, DeleteView):
     model = Reading
     template_name = "readings/reading_confirm_delete.html"
 
