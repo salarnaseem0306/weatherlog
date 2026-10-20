@@ -5,7 +5,9 @@ from . import views
 
 router = DefaultRouter()
 router.register("cities", views.CityViewSet, basename="city")
+router.register("readings", views.ReadingViewSet, basename="reading")
 
 urlpatterns = [
     path("", include(router.urls)),
 ]
+

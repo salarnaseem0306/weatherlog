@@ -66,3 +66,41 @@ that is 6 queries; with 500 cities it is 501.
 **Pagination:** the city detail page shows 31 readings per page (one month), and
 `?year=2023&month=7` filters the readings. Invalid values are ignored. Only one page
 of rows is loaded from the database at a time.
+
+
+## Day 3: The three tests I would keep
+
+If I could keep only three tests, I would keep:
+
+1. `test_other_user_gets_403_on_update` (permissions). This is the one rule that
+   protects other people's data. If it breaks, every user can edit every reading,
+   and nothing on screen would warn me because the buttons are only hidden.
+2. `test_duplicate_reading_shows_form_error_not_500` (views). I hit this bug while
+   building the app: a duplicate date crashed with an IntegrityError and a 500 page.
+   It is the "never an error page" rule from the exercise, tested through the real
+   request, so it also proves that the form check and the view work together.
+3. `test_duplicate_city_and_date_is_rejected` (model). The form check can be skipped
+   (admin, shell, a future import command), so the database constraint is the real
+   guarantee that a city has at most one reading per day.
+
+The rest (page returns 200, 404 for a missing id, pagination) are useful but would be
+noticed quickly by clicking around. These three protect things that fail silently.
+
+## Exercise 5, Day 1: GET /api/cities/ three ways
+
+Lines in `views.py` (non-blank): version 1 `@api_view` = 10, version 2 `ListAPIView` = 7,
+version 3 `ReadOnlyModelViewSet` = 7. Each version is a separate commit.
+
+Version 3 has the same line count as version 2 in `views.py`, but it serves two URLs
+(list and detail) and the router adds an API root page, so the saving shows up as I add
+endpoints, not on the first one.
+
+What the viewset does that version 1 did by hand:
+- Limits the allowed methods (version 1 needed `@api_view(["GET"])`; a read-only viewset
+  only exposes list and retrieve).
+- Builds the queryset and the serializer (`get_queryset()`, `get_serializer()`), so I
+  do not write `many=True` or `Response(...)` myself.
+- Looks up one object by id and returns a JSON 404 when it is missing (`get_object()`).
+- Generates the URLs (`/cities/` and `/cities/{id}/`) through the router.
+- Has hooks for pagination, filtering and permissions that I can switch on later without
+  touching the view body.
