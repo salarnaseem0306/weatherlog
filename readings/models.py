@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -29,7 +31,11 @@ class Reading(models.Model):
     date = models.DateField()
     max_temp = models.FloatField(null=True, blank=True)
     min_temp = models.FloatField(null=True, blank=True)
-    humidity = models.IntegerField(null=True, blank=True)
+    humidity = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+    )
     notes = models.TextField(blank=True)
     source = models.CharField(
         max_length=10,
@@ -59,3 +65,14 @@ class Reading(models.Model):
 
     def __str__(self):
         return f"{self.city.name}, {self.date}"
+
+    def clean(self):
+        """Business rule shared by the HTML form, the admin and the API."""
+        if (
+            self.min_temp is not None
+            and self.max_temp is not None
+            and self.min_temp > self.max_temp
+        ):
+            raise ValidationError(
+                {"min_temp": "Minimum temperature cannot be above the maximum."}
+            )

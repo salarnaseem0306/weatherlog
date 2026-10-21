@@ -104,3 +104,47 @@ What the viewset does that version 1 did by hand:
 - Generates the URLs (`/cities/` and `/cities/{id}/`) through the router.
 - Has hooks for pagination, filtering and permissions that I can switch on later without
   touching the view body.
+
+
+  ## Exercise 5: Overview table (what DRF did, and what it hid)
+
+| Before | DRF version | What DRF did for me | One thing it hid |
+|--------|-------------|---------------------|------------------|
+| Pydantic response models (`ReadingOut`) | Serializers | `ModelSerializer` builds fields from the model; one class converts model to JSON and JSON back to validated data | `city` is just an id unless I add `city_name`; the nested object has to be asked for. Also `reading_count` only works because the view annotates the queryset |
+| FastAPI routes, one function each | ViewSets and routers | One viewset gives list and detail, the router builds the URLs and the API root page | Which URLs exist: I have to read the router output or `/api/` to see them |
+
+### Content negotiation (Day 1 question)
+
+The browsable API and curl hit the same URL. DRF reads the `Accept` header: a browser
+sends `text/html`, so the BrowsableAPIRenderer answers; curl sends `*/*`, so the first
+renderer (JSON) answers. `?format=json` and `-H "Accept: application/json"` force JSON.
+
+
+### Why a token and not the login page (Day 2)
+
+A script or mobile app has no browser to fill in a login form and no cookie jar that follows
+redirects. A token is one header (`Authorization: Token <key>`) it can send with every
+request, it can be revoked without changing the password, and it is not tied to the CSRF
+rules that protect cookie sessions. Session auth stays on so the browsable API still works.
+TokenAuthentication is listed first so a missing or wrong token returns 401 with a
+`WWW-Authenticate` header; with SessionAuthentication first it would be 403.
+
+## Exercise 5, Day 2: Overview table rows
+
+| Before | DRF version | What DRF did for me | One thing it hid |
+|--------|-------------|---------------------|------------------|
+| `ModelForm` with `clean()` | `ModelSerializer` with `validate()` | Builds fields and validators from the model (unique city+date and humidity 0 to 100 came for free) and returns field errors as 400 JSON | It does not call `Model.clean()` or read `CheckConstraint`, so humidity 150 was a 500 until I added model validators, and min above max was accepted until `validate()` called `Reading.clean()` |
+| `ReadingOwnerMixin` on HTML views | Permission classes | `has_permission` and `has_object_permission` run for me, and a failure becomes 401 or 403 | `has_object_permission` only runs inside `get_object()`, so a POST (create) never reaches it; staff-only city creation had to go in `has_permission` |
+| Login page and session | Token authentication | One header per request, no cookie or CSRF | Which authentication class is listed first decides 401 versus 403, and listing a custom set silently turned off Basic auth |
+
+### PUT versus PATCH
+
+PUT must send the whole reading (a PUT without `city` returned 400 "This field is required").
+PATCH sends only the fields to change (`{"notes": "patched"}` changed just the notes). Both are
+idempotent: sending the same request twice gives the same result. POST is not.
+
+### 401 versus 403
+
+401 means the API does not know who I am (no token, or an invalid token). 403 means it knows
+who I am and the answer is no (a logged-in user changing someone else's reading, or a
+non-staff user writing a city). A wrong token returns 401 with `{"detail":"Invalid token."}`.

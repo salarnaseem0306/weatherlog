@@ -10,8 +10,13 @@ class CityForm(forms.ModelForm):
 
 
 class ReadingForm(forms.ModelForm):
+    # The city comes from the URL, not from the form, so it is passed in.
+    # min above max and humidity 0 to 100 are enforced by the model
+    # (Reading.clean and the field validators), not repeated here.
+    def __init__(self, *args, city=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.city = city
 
-    humidity = forms.IntegerField(min_value=0, max_value=100, required=False)
     class Meta:
         model = Reading
         fields = ["date", "max_temp", "min_temp", "humidity", "notes"]
@@ -19,22 +24,13 @@ class ReadingForm(forms.ModelForm):
             "date": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
         }
 
-    def __init__(self, *args, city=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.city = city
-
     def clean(self):
-        cleaned_data = super().clean()
-        max_temp = cleaned_data.get("max_temp")
-        min_temp = cleaned_data.get("min_temp")
-        if max_temp is not None and min_temp is not None and min_temp > max_temp:
-            self.add_error("min_temp", "Minimum temperature cannot be above the maximum.")
-
-        date = cleaned_data.get("date")
-        if self.city is not None and date is not None:
+        cleaned = super().clean()
+        date = cleaned.get("date")
+        if self.city and date:
             duplicates = Reading.objects.filter(city=self.city, date=date)
             if self.instance.pk:
                 duplicates = duplicates.exclude(pk=self.instance.pk)
             if duplicates.exists():
                 self.add_error("date", "This city already has a reading for that date.")
-        return cleaned_data
+        return cleaned

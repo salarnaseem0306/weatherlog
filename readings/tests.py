@@ -147,7 +147,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["readings"]), 1)
 
-    # --- creating readings ---
+  
 
     def test_reading_create_sets_created_by(self):
         self.login("ali")
@@ -167,7 +167,7 @@ class ViewTests(TestCase):
         self.assertEqual(Reading.objects.count(), 1)
         self.assertIn("date", response.context["form"].errors)
 
-    # --- ownership permissions ---
+   
 
     def test_owner_can_update_own_reading(self):
         self.login("ali")
