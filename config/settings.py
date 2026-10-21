@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'readings',
     "rest_framework",
     "rest_framework.authtoken",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -136,4 +137,5 @@ REST_FRAMEWORK = {
        
         "rest_framework.authentication.SessionAuthentication",
     ],
+     "DEFAULT_PAGINATION_CLASS": "readings.api.pagination.StandardPagination",
 }

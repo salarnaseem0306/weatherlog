@@ -148,3 +148,13 @@ idempotent: sending the same request twice gives the same result. POST is not.
 401 means the API does not know who I am (no token, or an invalid token). 403 means it knows
 who I am and the answer is no (a logged-in user changing someone else's reading, or a
 non-staff user writing a city). A wrong token returns 401 with `{"detail":"Invalid token."}`.
+
+
+## Exercise 5, Day 3: pagination and filtering
+
+| Before | DRF version | What DRF did for me | One thing it hid |
+|--------|-------------|---------------------|------------------|
+| `limit` and `offset` on /readings | Pagination classes | One setting paginates every list (`count`, `next`, `previous`, `results`), with `?page_size=` capped at 100 | A hand-written `@action` does not paginate by itself; I had to call `paginate_queryset` there. It also changes the response shape of every list endpoint |
+
+`django-filter` turns `?date_after=banana` into a 400 with the field name, and `ordering_fields`
+limits which columns can be sorted (an unknown `?ordering=` value is ignored, not rejected).
