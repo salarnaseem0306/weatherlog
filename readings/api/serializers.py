@@ -57,3 +57,36 @@ class ReadingSerializer(serializers.ModelSerializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError(exc.message_dict)
         return attrs
+
+
+# The serializers below only describe the stats response for the API docs.
+class HottestDaySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    max_temp = serializers.FloatField()
+
+
+class ColdestDaySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    min_temp = serializers.FloatField()
+
+
+class MostHumidDaySerializer(serializers.Serializer):
+    date = serializers.DateField()
+    humidity = serializers.IntegerField()
+
+
+class MonthlyStatsSerializer(serializers.Serializer):
+    month = serializers.CharField(help_text="Month as YYYY-MM")
+    days = serializers.IntegerField(help_text="Readings in that month")
+    avg_max_temp = serializers.FloatField(allow_null=True)
+    avg_min_temp = serializers.FloatField(allow_null=True)
+    avg_humidity = serializers.FloatField(allow_null=True)
+
+
+class CityStatsSerializer(serializers.Serializer):
+    city = serializers.CharField()
+    year = serializers.IntegerField()
+    hottest_day = HottestDaySerializer(allow_null=True)
+    coldest_day = ColdestDaySerializer(allow_null=True)
+    most_humid_day = MostHumidDaySerializer(allow_null=True)
+    monthly = MonthlyStatsSerializer(many=True)

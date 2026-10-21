@@ -1,4 +1,5 @@
 from django.urls import include, path
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 
@@ -10,5 +11,7 @@ router.register("readings", views.ReadingViewSet, basename="reading")
 
 urlpatterns = [
     path("auth/token/", obtain_auth_token, name="api-token"),
+    path("schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path("docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-docs"),
     path("", include(router.urls)),
 ]
