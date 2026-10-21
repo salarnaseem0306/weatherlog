@@ -1,21 +1,17 @@
 from django.db.models import Avg, Count
 from django.db.models.functions import TruncMonth
-
-from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
-from .serializers import CitySerializer, CityStatsSerializer, ReadingSerializer
-
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
-
 from readings.models import City, Reading
 
 from .filters import ReadingFilter
 from .permissions import IsOwnerOrStaffOrReadOnly
-from .serializers import CitySerializer, ReadingSerializer
+from .serializers import CitySerializer, CityStatsSerializer, ReadingSerializer
 
 
 def _day(reading, field):
@@ -37,9 +33,6 @@ class CityViewSet(viewsets.ModelViewSet):
     @extend_schema(responses=ReadingSerializer(many=True))
     @action(detail=True, methods=["get"])
     def readings(self, request, pk=None):
-
-     @action(detail=True, methods=["get"])
-     def readings(self, request, pk=None):
         """GET /api/cities/{id}/readings/ : readings for one city, newest first."""
         city = self.get_object()
         readings = (
@@ -64,9 +57,6 @@ class CityViewSet(viewsets.ModelViewSet):
     )
     @action(detail=True, methods=["get"])
     def stats(self, request, pk=None):
-
-     @action(detail=True, methods=["get"])
-     def stats(self, request, pk=None):
         """GET /api/cities/{id}/stats/?year=2023 : extremes and monthly averages."""
         city = self.get_object()
 
