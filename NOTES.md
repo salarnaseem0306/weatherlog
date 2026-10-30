@@ -16,10 +16,6 @@ Django hid: `choices` and `on_delete` are enforced by Django in Python, not by t
 ## on_delete
 I chose `on_delete=CASCADE` because the Day 2 delete page will show a confirmation that says how many readings will be deleted with the city, so no orphan readings are left behind.
 
-## Admin username & password
-admin 
-Salar1122
-
 ## Admin constraint errors
 Django checks UniqueConstraint and CheckConstraint in the admin form before saving, so I see a friendly message instead of a 500 error. The database constraints are still the last line of defence for data that skips the form.
 
